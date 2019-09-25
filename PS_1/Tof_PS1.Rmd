@@ -1,0 +1,133 @@
+---
+title: "Theory of Finance PS1"
+author: "Filip Mellgren"
+date: '2019-09-23'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r, include = FALSE}
+library(rio)
+library(tidyverse)
+library(lubridate)
+source("P_perf.R")
+```
+# Import data
+
+```{r}
+comp <- import("data_ps1_final.xlsx", which = "components")
+prices <- import("data_ps1_final.xlsx", which = "prices", skip = 1, setclass = "tibble")
+Rfdf <- import("DTB3.csv")
+```
+
+# Data cleaning
+```{r}
+# Declare NAs
+Rfdf <- Rfdf %>% mutate(DTB3 = as.numeric(replace(DTB3, DTB3==".", NA)))
+# Define the value that we need
+rf <- mean(Rfdf$DTB3, na.rm = TRUE)/100
+```
+
+# Part I
+
+## Q2
+```{r}
+# Rename date column
+prices <- prices %>% rename("date" = 1)
+
+# Deselect companies
+prices <- prices %>% select(-c("AMCR", "CTVA", "DOW", "FOX", "FOXA"))
+```
+
+```{r}
+# Calculate the arithmetic daily returns, store in a matrix, R
+t <- nrow(prices)
+n <- ncol(prices)
+R <- as.matrix(prices[2:t,2:n]-prices[1:t-1,2:n])/(prices[1:t-1,2:n])
+
+# Equal weights vector:
+w <- as.matrix(rep(1/(n-1), n-1))
+
+# Finally, the portfolio average daily return, volatility and Sharpe ratio.
+P_perf(R, w, 1)
+
+# Annualised: 
+P_perf(R, w, 252)
+```
+
+## Q3
+
+```{r}
+# Match the weights vector with the returns via the ticker symbol
+# Transpose returns, add ticker, join weights based on ticker
+P <- as.data.frame(cbind(t(R), names(R))) 
+P <- P %>% as_tibble() %>% rename("ticker" = V174)
+P <- inner_join(P, comp, by = c("ticker" = "Symbol"))
+
+# Check that it is sorted correctly:
+all(names(R) == P %>% select(ticker))
+
+# Define the weights
+w3 <- P$`Weight (%)` / 100
+
+# Daily
+P_perf(R, w3, 1)
+
+# Weekly
+P_perf(R, w3, 5)
+
+# Monthly
+P_perf(R, w3, 30)
+
+# Annual
+P_perf(R, w3, 252)
+
+```
+## Q4
+
+```{r}
+# Annual return
+r <- as.numeric(P_perf(R, w3, 252)[2,1])
+SD <- as.numeric(P_perf(R, w3, 252)[2,2])
+SR <- r/SD
+
+# Leverage ratio  
+v <- c(1, 3, 5)
+
+mu <- v*r + (1-v)*rf
+sigma <- abs(v)*SD
+sharpe <- (mu-rf)/sigma
+
+```
+
+## Q5
+
+```{r}
+r.daily <- as.numeric(P_perf(R, w3, 1)[2,1])
+A <- 1 # A for assets
+
+# Last august occurs 2/3 into the year. 
+days <- 2/3 * 252
+
+return <- A * (1 + r.daily)^days
+
+
+
+```
+
+## Q6
+
+For discussion
+
+
+# Part II
+
+## Q2
+```{r}
+
+```
+
+
