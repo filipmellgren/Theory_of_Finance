@@ -25,7 +25,7 @@ Rfdf <- import("DTB3.csv")
 
 # Data cleaning
 ```{r}
-# Declare NAs
+# Declare NAs.
 Rfdf <- Rfdf %>% mutate(DTB3 = as.numeric(replace(DTB3, DTB3==".", NA)))
 # Define the value that we need
 rf <- mean(Rfdf$DTB3, na.rm = TRUE)/100
