@@ -156,4 +156,4 @@ df.MVF.d %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
 
 ```
 
-
+# Part III
