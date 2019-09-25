@@ -14,6 +14,7 @@ library(rio)
 library(tidyverse)
 library(lubridate)
 source("P_perf.R")
+source("Mean_var_frontier.R")
 ```
 # Import data
 
@@ -128,6 +129,30 @@ For discussion
 ## Q2
 ```{r}
 df <- prices %>% select(date, AAPL, MSFT)
+
+# For the overview, we first provide a plot of indexed prices:
+df %>% mutate(AAPL = AAPL/AAPL[1], MSFT = MSFT/MSFT[1]) %>% 
+  gather(key = "stock", value = "Price", AAPL, MSFT) %>% 
+  ggplot(aes(x = date, y = Price, color = stock)) + 
+  geom_line() +
+  labs(title = "Index AAPL vs MSFT")
+
+
+# Actual correlation
+df.MVF.a <- MVF(df$AAPL, df$MSFT, cor(df$AAPL, df$MSFT))
+df.MVF.a %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
+
+# correlation = -1
+df.MVF.b <- MVF(df$AAPL, df$MSFT, -1)
+df.MVF.b %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
+
+# correlation = 0
+df.MVF.c <- MVF(df$AAPL, df$MSFT, 0)
+df.MVF.c %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
+
+# correlation = 1
+df.MVF.d <- MVF(df$AAPL, df$MSFT, 1)
+df.MVF.d %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
 
 ```
 

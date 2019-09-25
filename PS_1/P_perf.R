@@ -1,4 +1,6 @@
 # Portfolio performance
+# Filip Mellgren
+# Sep 25th 2019
 
 P_perf <- function(R, w, t){
   # R is a (daily) returns matrix
