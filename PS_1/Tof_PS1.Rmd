@@ -19,8 +19,8 @@ source("P_perf.R")
 
 ```{r}
 comp <- import("data_ps1_final.xlsx", which = "components")
-prices <- import("data_ps1_final.xlsx", which = "prices", skip = 1, setclass = "tibble")
-Rfdf <- import("DTB3.csv")
+prices <- import("PS_1/data_ps1_final.xlsx", which = "prices", skip = 1, setclass = "tibble")
+Rfdf <- import("PS_1/DTB3.csv")
 ```
 
 # Data cleaning
