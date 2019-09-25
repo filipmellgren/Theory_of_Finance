@@ -123,10 +123,11 @@ return <- A * (1 + r.daily)^days
 For discussion
 
 
-# Part II
+# Part II, mean variance frontiers
 
 ## Q2
 ```{r}
+df <- prices %>% select(date, AAPL, MSFT)
 
 ```
 
