@@ -22,7 +22,7 @@ MVF <- function(asset1, asset2, rho){
   w <- (-200:200)/200
   
   # Portfolio average return
-  mu <- w*r.msft + (1-w)*r.aapl
+  mu <- w*r.asset1 + (1-w)*r.asset2
   
   # Covariance
   cov <- rho * sd.asset1 * sd.asset2

@@ -16,8 +16,8 @@ library(lubridate)
 source("P_perf.R")
 source("Mean_var_frontier.R")
 ```
-# Import data
 
+# Import data
 ```{r}
 comp <- import("data_ps1_final.xlsx", which = "components")
 prices <- import("data_ps1_final.xlsx", which = "prices", skip = 1, setclass = "tibble")
@@ -114,9 +114,6 @@ A <- 1 # A for assets
 days <- 2/3 * 252
 
 return <- A * (1 + r.daily)^days
-
-
-
 ```
 
 ## Q6
@@ -157,3 +154,67 @@ df.MVF.d %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
 ```
 
 # Part III
+
+## Q1
+Find the weights of risky assets in the 30-stock tangency portfolio.
+
+```{r}
+# Data cleaning
+# Filter observations to only include top 30 according to weight
+stocks <- comp %>% filter(`Weight (%)` >= nth(comp$`Weight (%)`, 30))
+
+# Create a new weight such that it adds up to 1
+stocks <- stocks %>% mutate(weight = `Weight (%)`/sum(`Weight (%)`))
+
+# Maintain the same companies in the other df
+prices <- prices %>% select(c(stocks$Symbol))
+
+# Calculate the arithmetic daily returns, store in a matrix, R
+t <- nrow(prices)
+n <- ncol(prices)
+R <- as.matrix(prices[2:t,2:n]-prices[1:t-1,2:n])/(prices[1:t-1,2:n])
+
+# Define the mean returns and the covariance matrix
+mu <- t(exp((prices[t, 1:n]/prices[1, 1:n] - 1) * 252/t) -1)
+cov <- cov(prices)
+```
+
+First,
+
+Find the tangency portfolio. I.e. a point in the mu, sigma space.
+
+
+```{r}
+# Define some intermediary scalars that we use for optimising the portfolio
+# (These were taken from the lecture notes, lecture 3 p.9)
+ones <- rep(1, n)
+A <- t(mu) %*% solve(cov) %*% mu
+B <- t(mu) %*% solve(cov) %*% ones
+C <- ones %*% solve(cov) %*% ones
+
+A <- as.numeric(A)
+B <- as.numeric(B)
+C <- as.numeric(C)
+
+mu_star <- 0.05 # seq(0.01, 0.5, 0.001)
+lambda <- (C * mu_star - B) /(A*C - B^2)
+delta <- (A - B*mu_star) / (A*C - B^2)
+
+w <- solve(cov) %*% (mu * lambda + ones * delta)
+
+# Check that the w sums to (almost bc aproximating) one
+sum(w) - 1 < 1e-10
+
+```
+
+```{r}
+# Finally, we compare the weights:
+
+df <- data.frame(w, stocks$weight) %>% filter(stocks.weight >= nth(stocks$weight, 10))
+
+df %>% ggplot(aes(x = stocks.weight, y = w)) + geom_point() +
+  labs(title = "No relation between S&P weight and optimal weight", 
+       x = "S&P weight", y = "Optimal weight") + 
+  geom_smooth(method='lm',formula=y~x)
+```
+
