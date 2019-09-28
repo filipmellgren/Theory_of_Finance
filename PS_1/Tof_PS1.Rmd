@@ -1,6 +1,6 @@
 ---
 title: "Theory of Finance PS1"
-author: "Filip Mellgren"
+author: "Filip Mellgren, Oscar Krumlinde"
 date: '2019-09-23'
 output: pdf_document
 ---
@@ -35,7 +35,6 @@ rf <- mean(Rfdf$DTB3, na.rm = TRUE)/100
 
 # Part I
 
-## Q2
 ```{r}
 # Rename date column
 prices <- prices %>% rename("date" = 1)
@@ -44,20 +43,22 @@ prices <- prices %>% rename("date" = 1)
 prices <- prices %>% select(-c("AMCR", "CTVA", "DOW", "FOX", "FOXA"))
 ```
 
+## Q2
+
 ```{r}
 # Calculate the arithmetic daily returns, store in a matrix, R
 t <- nrow(prices)
-n <- ncol(prices)
-R <- as.matrix(prices[2:t,2:n]-prices[1:t-1,2:n])/(prices[1:t-1,2:n])
+n <- ncol(prices) -1#  # number of companies, minus 1 because of the date col 
+R <- as.matrix(prices[2:t,2:(n+1)]-prices[1:(t-1),2:(n+1)])/(prices[1:t-1,2:(n+1)])
 
 # Equal weights vector:
-w <- as.matrix(rep(1/(n-1), n-1))
+w <- as.matrix(rep(1/(n), n))
 
 # Finally, the portfolio average daily return, volatility and Sharpe ratio.
-P_perf(R, w, 1)
+P_perf(R, w, 1, 0)
 
 # Annualised: 
-P_perf(R, w, 252)
+P_perf(R, w, 252, 0)
 ```
 
 ## Q3
@@ -65,7 +66,7 @@ P_perf(R, w, 252)
 ```{r}
 # Match the weights vector with the returns via the ticker symbol
 # Transpose returns, add ticker, join weights based on ticker
-P <- as.data.frame(cbind(t(R), names(R))) 
+P <- as.data.frame(cbind(t(R), names(R)))
 P <- P %>% as_tibble() %>% rename("ticker" = V174)
 P <- inner_join(P, comp, by = c("ticker" = "Symbol"))
 
@@ -76,45 +77,45 @@ all(names(R) == P %>% select(ticker))
 w3 <- P$`Weight (%)` / 100
 
 # Daily
-P_perf(R, w3, 1)
+P_perf(R, w3, 1, rf)
 
 # Weekly
-P_perf(R, w3, 5)
+P_perf(R, w3, 5, rf)
 
 # Monthly
-P_perf(R, w3, 30)
+P_perf(R, w3, 21, rf)
 
 # Annual
-P_perf(R, w3, 252)
+P_perf(R, w3, 252, rf)
 
 ```
 ## Q4
 
 ```{r}
 # Annual return
-r <- as.numeric(P_perf(R, w3, 252)[2,1])
-SD <- as.numeric(P_perf(R, w3, 252)[2,2])
-SR <- r/SD
+r_e <- as.numeric(P_perf(R, w3, 252, rf)[2,1])
+SD <- as.numeric(P_perf(R, w3, 252, rf)[2,2])
+SR <- r_e/SD
 
 # Leverage ratio  
 v <- c(1, 3, 5)
 
-mu <- v*r + (1-v)*rf
+mu_e <- v*r_e + (1-v)*rf
 sigma <- abs(v)*SD
-sharpe <- (mu-rf)/sigma
-
+sharpe <- (mu_e)/sigma
 ```
 
 ## Q5
 
 ```{r}
-r.daily <- as.numeric(P_perf(R, w3, 1)[2,1])
+r.daily <- as.numeric(P_perf(R, w3, 1, rf)[2,1])
 A <- 1 # A for assets
 
 # Last august occurs 2/3 into the year. 
 days <- 2/3 * 252
 
 return <- A * (1 + r.daily)^days
+
 ```
 
 ## Q6
@@ -135,22 +136,25 @@ df %>% mutate(AAPL = AAPL/AAPL[1], MSFT = MSFT/MSFT[1]) %>%
   geom_line() +
   labs(title = "Index AAPL vs MSFT")
 
-
 # Actual correlation
 df.MVF.a <- MVF(df$AAPL, df$MSFT, cor(df$AAPL, df$MSFT))
-df.MVF.a %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
+df.MVF.a %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point() +
+  labs(title = "Actual correlation")
 
 # correlation = -1
 df.MVF.b <- MVF(df$AAPL, df$MSFT, -1)
-df.MVF.b %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
+df.MVF.b %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point() +
+  labs(title = "Correlation set to -1")
 
 # correlation = 0
 df.MVF.c <- MVF(df$AAPL, df$MSFT, 0)
-df.MVF.c %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
+df.MVF.c %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point() +
+  labs(title = "Correlation set to 0")
 
 # correlation = 1
 df.MVF.d <- MVF(df$AAPL, df$MSFT, 1)
-df.MVF.d %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point()
+df.MVF.d %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point() +
+  labs(title = "Correlation set to 1")
 
 ```
 
@@ -168,16 +172,16 @@ stocks <- comp %>% filter(`Weight (%)` >= nth(comp$`Weight (%)`, 30))
 stocks <- stocks %>% mutate(weight = `Weight (%)`/sum(`Weight (%)`))
 
 # Keep the same companies in the prices data frame
-prices <- prices %>% select(c(stocks$Symbol))
+prices_30 <- prices %>% select(c(stocks$Symbol))
 
-# Calculate the arithmetic daily returns, store in a matrix, R
-t <- nrow(prices)
-n <- ncol(prices)
-mu <- exp(mean(R$AAPL)*252/t)
+# Calculate the arithmetic daily returns
+t <- nrow(prices_30)
+n <- ncol(prices_30)
+
 # Define the annualised mean returns and the covariance matrix
-mu <- t(exp((prices[t, 1:n]/prices[1, 1:n]-1)*252/t) -1)
+mu <- t(exp((prices_30[t, 1:n]/prices_30[1, 1:n]-1)*252/t) -1)
 mu_e <- mu - rf
-Sigma <- cov(prices)
+Sigma <- cov(prices_30)
 
 ```
 
@@ -188,15 +192,16 @@ Sigma <- cov(prices)
 ones <- rep(1, length(mu))
 w_T <- (solve(Sigma)%*%mu_e) / as.numeric(t(ones) %*% solve(Sigma) %*% mu_e)
 
-#? w <- MVcalc(0.05, mu, cov)
-
 # Next, we compare the weights for the ten largest companies:
-df <- data.frame(w_T, stocks$weight) %>% filter(stocks.weight >= nth(stocks$weight, 10))
+df <- data.frame(w_T, stocks$weight, stocks$Symbol) %>% filter(stocks.weight >= nth(stocks$weight, 10))
 
 df %>% ggplot(aes(x = stocks.weight, y = w_T)) + geom_point() +
-  labs(title = "No relation between S&P weight and optimal weight", 
-       x = "S&P weight", y = "Optimal weight") + 
+  labs(title = "No relation between S&P weight and the tangency portfolio weight", 
+       x = "S&P weight", y = "Tangency portfolio weight") + 
   geom_smooth(method='lm',formula=y~x)
+
+# Weights for reporting
+df %>% select(w_T, stocks.Symbol)
 ```
 # Q2
 ```{r}
@@ -218,20 +223,35 @@ df %>% ggplot(aes(x = stocks.weight, y = w_mvp)) + geom_point() +
 # Q3
 ```{r}
 # Variance MVP, estimated using historic data
-MVP <-  as.matrix(prices) %*% w_mvp
+MVP <-  as.matrix(prices_30) %*% w_mvp
 as.numeric(var(MVP))
 
 # Variance TP, estimated using historic data
-TP <-  as.matrix(prices) %*% w_T
+TP <-  as.matrix(prices_30) %*% w_T
 as.numeric(var(TP))
 
 # Covariance MVP and the tangency portfolio
 as.numeric(cov(MVP, TP))
 
-# TODO: it's incorrect
+cor(MVP, TP)
 ```
 
 ```{r}
+tibble(MVP, TP) %>% mutate(date = 1:length(TP),
+                           MVP = MVP/MVP[1],
+                           TP = TP/TP[1])  %>% 
+  gather(key = "stock", value = "Price", MVP, TP) %>% 
+  ggplot(aes(x = date, y = Price, color = stock)) + 
+  geom_line()
+```
+
+Is the whole S&P500 the tangency portfolio? Calcu- late the weights of all 500 constitutes inside the tangency portfolio. Comment on the difference between the top10 constitutes between this tangency portfolio and 30-stock tangency portfolio from (1)
+ 
+```{r}
+
 
 ```
+
+First note that both portfolios are efficient, this means that there is no further idiosyncratic risk that can be diversified away by combining two portfolios, and all remaining common risk is due to market risk. The remaining common risk is measured by the correlation between the two. 
+
 

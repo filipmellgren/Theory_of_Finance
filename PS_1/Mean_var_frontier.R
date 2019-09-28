@@ -19,7 +19,7 @@ MVF <- function(asset1, asset2, rho){
   sd.asset2 <- sqrt(var(asset2)*252/t)
   
   # Weight on asset1 vector, allows for short selling
-  w <- (-200:200)/200
+  w <- (-300:100)/100
   
   # Portfolio average return
   mu <- w*r.asset1 + (1-w)*r.asset2
