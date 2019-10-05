@@ -18,5 +18,5 @@ P_perf <- function(R, w, t, rf){
   var <- ( t(w)%*%cov(R)%*%w ) * t
   SR <- mu_e/sqrt(var)
   
-  return(cbind(c("mu_e", mu_e), c("Std dev", sqrt(var)), c("Sharpe", SR)))
+  return(cbind(c("mu", mu), c("Std dev", sqrt(var)), c("Sharpe", SR)))
 }
