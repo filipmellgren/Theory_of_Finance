@@ -13,9 +13,11 @@ knitr::opts_chunk$set(echo = FALSE)
 library(rio)
 library(tidyverse)
 library(lubridate)
+library(MASS)
 source("P_perf.R")
 source("Mean_var_frontier.R")
 source("MVcalc.R")
+
 ```
 
 # Import data
@@ -40,9 +42,7 @@ rf <- mean(Rfdf$DTB3, na.rm = TRUE)/100
 prices <- prices %>% rename("date" = 1)
 
 # Deselect companies
-df <- prices %>% select(-c("AMCR", "CTVA", "DOW", "FOX", "FOXA"))
-
-
+df <- prices %>% dplyr::select(-c("AMCR", "CTVA", "DOW", "FOX", "FOXA"))
 ```
 
 ## Q2
@@ -51,16 +51,17 @@ df <- prices %>% select(-c("AMCR", "CTVA", "DOW", "FOX", "FOXA"))
 # Calculate the arithmetic daily returns, store in a matrix, R
 t <- nrow(df)
 n <- ncol(df) -1#  # number of companies, minus 1 because of the date col 
+# Calculate returns:
 R <- as.matrix(df[2:t,2:(n+1)]-df[1:(t-1),2:(n+1)])/(df[1:t-1,2:(n+1)])
 
 # Equal weights vector:
 w <- as.matrix(rep(1/(n), n))
 
-# Finally, the portfolio average daily return, volatility and Sharpe ratio.
-P_perf(R, w, 1, 0)
+# Find the mean and variance and SR of the portfolio 
+P_perf(R, w, 1, rf)
 
-# Annualised: 
-P_perf(R, w, 252, 0)
+# Annualised
+P_perf(R, w, 252, rf)
 ```
 
 ## Q3
@@ -73,7 +74,7 @@ P <- P %>% as_tibble() %>% rename("ticker" = V174)
 P <- inner_join(P, comp, by = c("ticker" = "Symbol"))
 
 # Check that it is sorted correctly:
-all(names(R) == P %>% select(ticker))
+all(names(R) == P %>% dplyr::select(ticker))
 
 # Define the weights
 w3 <- P$`Weight (%)` / 100
@@ -84,7 +85,7 @@ P_perf(R, w3, 1, rf)
 # Weekly
 P_perf(R, w3, 5, rf)
 
-# Monthly
+# Monthly (assume the month has 21 days)
 P_perf(R, w3, 21, rf)
 
 # Annual
@@ -95,16 +96,16 @@ P_perf(R, w3, 252, rf)
 
 ```{r}
 # Annual return
-r_e <- as.numeric(P_perf(R, w3, 252, rf)[2,1])
+r <- as.numeric(P_perf(R, w3, 252, rf)[2,1]) 
 SD <- as.numeric(P_perf(R, w3, 252, rf)[2,2])
-SR <- r_e/SD
+SR <- (r-rf)/SD
 
 # Leverage ratio  
 v <- c(1, 3, 5)
 
-mu_e <- v*r_e + (1-v)*rf
+mu <- v*r + (1-v)*rf
 sigma <- abs(v)*SD
-sharpe <- (mu_e)/sigma
+sharpe <- (mu - rf)/sigma
 ```
 
 ## Q5
@@ -129,7 +130,7 @@ For discussion
 
 ## Q2
 ```{r}
-df2 <- df %>% select(date, AAPL, MSFT)
+df2 <- df %>% dplyr::select(date, AAPL, MSFT)
 
 # For the overview, we first provide a plot of indexed prices:
 df2 %>% mutate(AAPL = AAPL/AAPL[1], MSFT = MSFT/MSFT[1]) %>% 
@@ -174,7 +175,7 @@ stocks <- comp %>% filter(`Weight (%)` >= nth(comp$`Weight (%)`, 30))
 stocks <- stocks %>% mutate(weight = `Weight (%)`/sum(`Weight (%)`))
 
 # Keep the same companies in the prices data frame
-prices_30 <- prices %>% select(c(stocks$Symbol))
+prices_30 <- prices %>% dplyr::select(c(stocks$Symbol))
 t <- nrow(prices_30)
 n <- ncol(prices_30)
 
@@ -193,7 +194,7 @@ ones <- rep(1, length(mu))
 w_T <- (solve(Sigma)%*%mu_e) / as.numeric(t(ones) %*% solve(Sigma) %*% mu_e)
 
 # Next, we compare the weights for the ten largest companies:
-df3 <- data.frame(w_T, stocks$weight, stocks$Symbol) %>% filter(stocks.weight >= nth(stocks$weight, 10))
+df3 <- data.frame(w_T, stocks$weight, stocks$Symbol) %>% top_n(10, w_T)
 
 df3 %>% ggplot(aes(x = stocks.weight, y = w_T)) + geom_point() +
   labs(title = "No relation between S&P weight and the tangency portfolio weight", 
@@ -201,7 +202,7 @@ df3 %>% ggplot(aes(x = stocks.weight, y = w_T)) + geom_point() +
   geom_smooth(method='lm',formula=y~x)
 
 # Weights for reporting
-df3 %>% select(w_T, stocks.Symbol)
+df3 %>% dplyr::select(w_T, stocks.Symbol)
 ```
 # Q2
 ```{r}
@@ -211,12 +212,16 @@ df3 %>% select(w_T, stocks.Symbol)
 w_mvp <- solve(Sigma) %*% ones / as.numeric(ones %*% solve(Sigma) %*% ones)
 
 # Next, we compare the weights for the ten largest companies:
-df32 <- data.frame(w_mvp, stocks$weight) %>% filter(stocks.weight >= nth(stocks$weight, 10))
+df32 <- data.frame(w_mvp, stocks$weight, stocks$Symbol)  %>% top_n(10, w_mvp)
+
 
 df32 %>% ggplot(aes(x = stocks.weight, y = w_mvp)) + geom_point() +
   labs(title = "No relation between S&P weight and MVP weight", 
        x = "S&P weight", y = "MVP weight") + 
   geom_smooth(method='lm',formula=y~x)
+
+df32 %>% dplyr::select(w_mvp, stocks.Symbol) %>% arrange(-w_mvp)
+
 
 ```
 
@@ -239,12 +244,14 @@ cor(MVP, TP)
 
 
 ```
-
+## Q4
 Is the whole S&P500 the tangency portfolio? Calculate the weights of all 500 constitutes inside the tangency portfolio. Comment on the difference between the top10 constitutes between this tangency portfolio and 30-stock tangency portfolio from (1)
  
 ```{r}
-stocks_bonus <- comp
-prices_bonus <- prices %>% select(c(stocks_bonus$Symbol))  %>% select(-c("AMCR", "CTVA", "DOW", "FOX", "FOXA"))
+stocks_bonus <- comp %>% filter(!Symbol %in% c("AMCR", "CTVA", "DOW", "FOX", "FOXA"))
+prices_bonus <- prices %>% 
+  dplyr::select(-c("AMCR", "CTVA", "DOW", "FOX", "FOXA")) %>%
+  dplyr::select(-"date")
 
 t <- nrow(prices_bonus)
 n <- ncol(prices_bonus)
@@ -258,7 +265,6 @@ Sigma <- cov(prices_bonus)
 
 
 ```{r}
-library(MASS)
 ## Find the tangency portfolio weights
 # Formula for calculating the tangency portfolio weights
 # Since the covariance matrix is not invertible...
@@ -269,8 +275,15 @@ library(MASS)
 
 ones <- rep(1, length(mu))
 w_T <- (ginv(Sigma)%*%mu_e) / as.numeric(t(ones) %*% ginv(Sigma) %*% mu_e)
+
+df_bonus <- data.frame(w_T, stocks_bonus$`Weight (%)`, stocks_bonus$Symbol)
+df_bonus %>% filter(stocks_bonus.Symbol %in% c("AAPL", "AMZN", "PEP", "WMT", "SBUX", "CAT", "MS", "GPS", "EXPE"))
+
+# Comment on the top 10 constitutes between this portfolio and the tangency portfolio
+
+df_bonus %>% top_n(10, w_T) %>% arrange(-w_T) %>% dplyr::select(w_T, stocks_bonus.Symbol)
 ```
-First note that both portfolios are efficient, there is no idiosyncratic risk that can be diversified away by combining two portfolios. Hence, the two portfolios contain systemic risk up to a varying degree which is measured by the correlation between the two. So $\sigma_{mvp} = \rho_{mvp, tp} \sigma_{tp} $. No constant needs to be added to make the equality hold because that would mean there were idiosyncratic risk left in one of the portfolios, contradicting the definition of the efficiency frontier. As a final step, we note that the relationship is equivalent to what was asked for which is obtained by multiplying with both sides with $\sigma_{mvp}.$
+First note that both portfolios are efficient, there is no idiosyncratic risk that can be diversified away by combining two portfolios. Hence, the two portfolios contain systemic risk up to a varying degree which is measured by the correlation between the two. Therefore $\sigma_{mvp} = \rho_{mvp, tp} \sigma_{tp} (*) $. No constant needs to be added to make the equality hold because that would mean there were idiosyncratic risk left in one of the portfolios, contradicting the definition of the efficiency frontier. As a final step, we note that the relationship (*) is equivalent to what was asked for which is obtained by multiplying with both sides with $\sigma_{mvp}.$
 
 The remaining common risk is measured by the correlation between the two. 
 
