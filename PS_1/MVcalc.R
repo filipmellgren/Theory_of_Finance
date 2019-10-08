@@ -20,10 +20,10 @@ MVcalc <- function(mu_star, mu, Sigma){
   w <- rep(0, length(mu_star))
   
   for (ix in 1:length(mu_star)) {
-    w[ix] <- (solve(Sigma) %*% (mu * lambda[ix] + ones * delta[ix]))[1]
-    #StdRp[ix] = sqrt(t(w[ix])%*%Sigma%*%w[ix])
+    # Use formula given by professor
+    # Index one of the values, don't know atm why 2 works but 1 doesn't
+    # 1 gave the wrong slope of the mean var frontier with corr = 1
+    w[ix] <- (solve(Sigma) %*% (mu * lambda[ix] + ones * delta[ix]))[2] 
   }
-  
-  # Check that the w sums to (almost bc aproximating) one
     return(w) 
   }

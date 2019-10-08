@@ -144,24 +144,29 @@ df2 %>% mutate(AAPL = AAPL/AAPL[1], MSFT = MSFT/MSFT[1]) %>%
   labs(title = "Index AAPL vs MSFT")
 
 # Actual correlation
-df.MVF.a <- MVF(df2$AAPL, df2$MSFT, cor(df2$AAPL, df2$MSFT))
+df.MVF.a <- MVF(df2$AAPL, df2$MSFT, cor(df2$AAPL, df2$MSFT)) %>% mutate(corr = "actual")
 df.MVF.a %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Actual correlation")
 
 # correlation = -1
-df.MVF.b <- MVF(df2$AAPL, df2$MSFT, -.9999)
+df.MVF.b <- MVF(df2$AAPL, df2$MSFT, -.99999) %>% mutate(corr = "-1")
 df.MVF.b %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Correlation set to -1")
 
 # correlation = 0
-df.MVF.c <- MVF(df2$AAPL, df2$MSFT, 0)
+df.MVF.c <- MVF(df2$AAPL, df2$MSFT, 0) %>% mutate(corr = "0")
 df.MVF.c %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Correlation set to 0")
 
 # correlation = 1
-df.MVF.d <- MVF(df2$AAPL, df2$MSFT, 0.9999)
+df.MVF.d <- MVF(df2$AAPL, df2$MSFT, 0.99999) %>% mutate(corr = "1")
 df.MVF.d %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Correlation set to 1")
+
+bind_rows(df.MVF.a, df.MVF.b, df.MVF.c, df.MVF.d) %>% ggplot(aes(x = sigma, y = mustar, color = corr)) + geom_point(size = 0.2) +
+  labs(title = "Mean variance frontiers", x = "Volatility",
+       y = "Annualised return", color = "Correlation") +
+  theme_classic()
 
 ```
 
@@ -291,4 +296,7 @@ First note that both portfolios are efficient, there is no idiosyncratic risk th
 
 The remaining common risk is measured by the correlation between the two. 
 
+```{r}
+
+```
 

@@ -9,7 +9,7 @@ MVF <- function(asset1, asset2, rho){
   
   # Annual returns calculated as return so far over a time period t
   # scaled by to be that of a year
-  
+
   t <- length(asset1)
   r.asset1 <- exp((asset1[t]/asset1[1] - 1) * 252/t) -1
   r.asset2 <- exp((asset2[t]/asset2[1] - 1) * 252/t) -1
@@ -19,10 +19,10 @@ MVF <- function(asset1, asset2, rho){
   sd.asset2 <- sqrt(var(asset2)*252/t)
   
   mu <- c(r.asset1, r.asset2)
-  mustar <- rep(1:100)/100
+  mustar <- rep(500:700, length.out = 1000)/1000
   # Covariance
   cov <- rho * sd.asset1 * sd.asset2
-  Sigma <- rbind(c(cov, sd.asset1^2 ), c(sd.asset2^2, cov))
+  Sigma <- rbind(c(sd.asset1^2, cov), c(cov, sd.asset2^2))
   w <- MVcalc(mustar, mu, Sigma)
   
   
