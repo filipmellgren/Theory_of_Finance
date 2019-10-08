@@ -130,6 +130,10 @@ For discussion
 
 ## Q2
 ```{r}
+source("P_perf.R")
+source("Mean_var_frontier.R")
+source("MVcalc.R")
+
 df2 <- df %>% dplyr::select(date, AAPL, MSFT)
 
 # For the overview, we first provide a plot of indexed prices:
@@ -141,7 +145,7 @@ df2 %>% mutate(AAPL = AAPL/AAPL[1], MSFT = MSFT/MSFT[1]) %>%
 
 # Actual correlation
 df.MVF.a <- MVF(df2$AAPL, df2$MSFT, cor(df2$AAPL, df2$MSFT))
-df.MVF.a %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point() +
+df.MVF.a %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Actual correlation")
 
 # correlation = -1
@@ -151,12 +155,12 @@ df.MVF.b %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point() +
 
 # correlation = 0
 df.MVF.c <- MVF(df2$AAPL, df2$MSFT, 0)
-df.MVF.c %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point() +
+df.MVF.c %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Correlation set to 0")
 
 # correlation = 1
 df.MVF.d <- MVF(df2$AAPL, df2$MSFT, 1)
-df.MVF.d %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point() +
+df.MVF.d %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Correlation set to 1")
 
 ```

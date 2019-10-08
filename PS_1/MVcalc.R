@@ -3,13 +3,13 @@ MVcalc <- function(mu_star, mu, Sigma){
   # mu is a vector of asset returns
   # Sigma is the variance covariance matrix.
 
-  
+  n <- length(mu)
   # Define some intermediary scalars that we use for optimising the portfolio
   ones <- rep(1, n)
   A <- t(mu) %*% solve(Sigma) %*% mu
   B <- t(mu) %*% solve(Sigma) %*% ones
-  C <- ones %*% solve(Sigma) %*% ones
-  
+  C <- t(ones) %*% solve(Sigma) %*% ones
+
   A <- as.numeric(A)
   B <- as.numeric(B)
   C <- as.numeric(C)
@@ -17,14 +17,13 @@ MVcalc <- function(mu_star, mu, Sigma){
   lambda <- (C * mu_star - B) /(A*C - B^2)
   delta <- (A - B*mu_star) / (A*C - B^2)
   
-  w <- solve(Sigma) %*% (mu * lambda + ones * delta)
-  StdRp = sqrt(t(w)%*%Sigma%*%w)
+  w <- rep(0, length(mu_star))
+  
+  for (ix in 1:length(mu_star)) {
+    w[ix] <- (solve(Sigma) %*% (mu * lambda[ix] + ones * delta[ix]))[1]
+    #StdRp[ix] = sqrt(t(w[ix])%*%Sigma%*%w[ix])
+  }
   
   # Check that the w sums to (almost bc aproximating) one
-  if(sum(w) - 1 < 1e-10){
     return(w) 
   }
-  else {
-    return("error")
-  }
-}

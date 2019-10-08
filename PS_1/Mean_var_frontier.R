@@ -18,18 +18,20 @@ MVF <- function(asset1, asset2, rho){
   sd.asset1 <- sqrt(var(asset1)*252/t)
   sd.asset2 <- sqrt(var(asset2)*252/t)
   
-  # Weight on asset1 vector, allows for short selling
-  w <- (-300:100)/100
-  
-  # Portfolio average return
-  mu <- w*r.asset1 + (1-w)*r.asset2
-  
+  mu <- c(r.asset1, r.asset2)
+  mustar <- rep(1:100)/100
   # Covariance
   cov <- rho * sd.asset1 * sd.asset2
+  Sigma <- rbind(c(cov, sd.asset1^2 ), c(sd.asset2^2, cov))
+  w <- MVcalc(mustar, mu, Sigma)
   
-  sigma <- sqrt(w^2 * sd.asset1^2 + (1-w)^2 * sd.asset2^2 + 2*w*(1-w)*cov)
   
-  df.MVF <- as_tibble(cbind(w, mu, sigma))
+  for (ix in 1:length(mustar)) {
+    sigma[ix] <- sqrt((w[ix])^2 * sd.asset1^2 + (1-w[ix])^2 * sd.asset2^2 + 2*w[ix]*(1-w[ix])*cov)
+  }
+  
+  
+  df.MVF <- as_tibble(cbind(w, mustar, sigma))
   
   return(df.MVF)
 }
