@@ -149,8 +149,8 @@ df.MVF.a %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Actual correlation")
 
 # correlation = -1
-df.MVF.b <- MVF(df2$AAPL, df2$MSFT, -1)
-df.MVF.b %>% ggplot(aes(x = sigma, y = mu, color = w)) + geom_point() +
+df.MVF.b <- MVF(df2$AAPL, df2$MSFT, -.9999)
+df.MVF.b %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Correlation set to -1")
 
 # correlation = 0
@@ -159,7 +159,7 @@ df.MVF.c %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Correlation set to 0")
 
 # correlation = 1
-df.MVF.d <- MVF(df2$AAPL, df2$MSFT, 1)
+df.MVF.d <- MVF(df2$AAPL, df2$MSFT, 0.9999)
 df.MVF.d %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Correlation set to 1")
 
