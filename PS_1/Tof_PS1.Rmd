@@ -140,7 +140,7 @@ df2 %>% mutate(AAPL = AAPL/AAPL[1], MSFT = MSFT/MSFT[1]) %>%
   labs(title = "Index AAPL vs MSFT")
 
 # Actual correlation
-df.MVF.a <- MVF(df2$AAPL, df2$MSFT, cor(df2$AAPL, df2$MSFT)) %>% mutate(corr = "actual")
+df.MVF.a <- MVF(df2$AAPL, df2$MSFT, cor(df2$AAPL, df2$MSFT)) %>% mutate(corr = "Actual")
 df.MVF.a %>% ggplot(aes(x = sigma, y = mustar, color = w)) + geom_point() +
   labs(title = "Actual correlation")
 
@@ -199,7 +199,7 @@ ones <- rep(1, length(mu))
 w_T <- (solve(Sigma)%*%mu_e) / as.numeric(t(ones) %*% solve(Sigma) %*% mu_e)
 
 # Next, we compare the weights for the ten largest companies:
-df3 <- data.frame(w_T, stocks$weight, stocks$Symbol) %>% top_n(10, w_T)
+df3 <- data.frame(w_T, stocks$weight, stocks$Symbol) %>% top_n(10, stocks.weight)
 
 df3 %>% ggplot(aes(x = stocks.weight, y = w_T)) + geom_point() +
   labs(title = "No relation between S&P weight and the tangency portfolio weight", 
@@ -217,15 +217,14 @@ df3 %>% dplyr::select(w_T, stocks.Symbol)
 w_mvp <- solve(Sigma) %*% ones / as.numeric(ones %*% solve(Sigma) %*% ones)
 
 # Next, we compare the weights for the ten largest companies:
-df32 <- data.frame(w_mvp, stocks$weight, stocks$Symbol)  %>% top_n(10, w_mvp)
-
+df32 <- data.frame(w_mvp, stocks$weight, stocks$Symbol)  %>% top_n(10, stocks.weight)
 
 df32 %>% ggplot(aes(x = stocks.weight, y = w_mvp)) + geom_point() +
   labs(title = "No relation between S&P weight and MVP weight", 
        x = "S&P weight", y = "MVP weight") + 
   geom_smooth(method='lm',formula=y~x)
 
-df32 %>% dplyr::select(w_mvp, stocks.Symbol) %>% arrange(-w_mvp)
+df32 %>% dplyr::select(w_mvp, stocks.Symbol)
 
 
 ```
