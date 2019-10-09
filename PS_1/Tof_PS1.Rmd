@@ -130,10 +130,6 @@ For discussion
 
 ## Q2
 ```{r}
-source("P_perf.R")
-source("Mean_var_frontier.R")
-source("MVcalc.R")
-
 df2 <- df %>% dplyr::select(date, AAPL, MSFT)
 
 # For the overview, we first provide a plot of indexed prices:

@@ -15,11 +15,11 @@ MVF <- function(asset1, asset2, rho){
   r.asset2 <- exp((asset2[t]/asset2[1] - 1) * 252/t) -1
   
   # Annualised volatility
-  sd.asset1 <- sqrt(var(asset1)*252/t)
-  sd.asset2 <- sqrt(var(asset2)*252/t)
+  sd.asset1 <- sqrt(var(diff(asset1))*252/t)
+  sd.asset2 <- sqrt(var(diff(asset2))*252/t)
   
   mu <- c(r.asset1, r.asset2)
-  mustar <- rep(500:700, length.out = 1000)/1000
+  mustar <- rep(550:700, length.out = 1000)/1000
   # Covariance
   cov <- rho * sd.asset1 * sd.asset2
   Sigma <- rbind(c(sd.asset1^2, cov), c(cov, sd.asset2^2))
